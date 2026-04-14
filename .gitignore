@@ -51,3 +51,9 @@ app.*.map.json
 # Generated files
 *.g.dart
 *.freezed.dart
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
