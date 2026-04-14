@@ -48,6 +48,10 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      # .gitignore excludes *.freezed.dart / *.g.dart — CI must regenerate them.
+      - name: Code generation (build_runner)
+        run: dart run build_runner build --delete-conflicting-outputs
+
       - name: Analyze
         run: flutter analyze
 
