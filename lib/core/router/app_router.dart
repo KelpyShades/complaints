@@ -1,22 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/admin/complaints/ui/screens/admin_complaint_detail_screen.dart';
-import '../../features/admin/complaints/ui/screens/admin_complaints_screen.dart';
-import '../../features/admin/dashboard/ui/screens/admin_dashboard_screen.dart';
-import '../../features/admin/notifications/ui/screens/admin_activity_screen.dart';
-import '../../features/admin/reports/ui/screens/reports_screen.dart';
+import 'admin_adaptive_screens.dart';
 import '../../features/auth/ui/screens/forgot_password_screen.dart';
 import '../../features/auth/ui/screens/login_screen.dart';
 import '../../features/auth/ui/screens/register_screen.dart';
-import '../../features/student/complaints/ui/screens/student_complaint_detail_screen.dart';
-import '../../features/student/complaints/ui/screens/student_complaint_form_screen.dart';
-import '../../features/student/complaints/ui/screens/student_complaints_screen.dart';
-import '../../features/student/complaints/ui/screens/student_history_screen.dart';
-import '../../features/student/notifications/ui/screens/student_activity_screen.dart';
-import '../../features/student/profile/ui/screens/student_profile_screen.dart';
 import 'admin_shell.dart';
 import 'auth_guard.dart';
+import 'student_adaptive_screens.dart';
 import 'student_shell.dart';
 
 /// Route path constants for the entire app.
@@ -33,6 +24,7 @@ abstract final class AppRoutes {
   static const adminComplaintDetail = '/admin/complaints/:id';
   static const adminNotifications = '/admin/notifications';
   static const adminReports = '/admin/reports';
+  static const adminProfile = '/admin/profile';
 
   // ── Student ─────────────────────────────────────────────────────────────
   static const studentRoot = '/student';
@@ -78,59 +70,63 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: AppRoutes.adminDashboard,
-            builder: (_, _) => const AdminDashboardScreen(),
+            builder: (_, _) => const AdminDashboardRouteBody(),
           ),
           GoRoute(
             path: AppRoutes.adminComplaints,
-            builder: (_, _) => const AdminComplaintsScreen(),
+            builder: (_, _) => const AdminComplaintsRouteBody(),
           ),
           GoRoute(
             path: AppRoutes.adminComplaintDetail,
-            builder: (_, state) => AdminComplaintDetailScreen(
+            builder: (_, state) => AdminComplaintDetailRouteBody(
               complaintId: state.pathParameters['id']!,
             ),
           ),
           GoRoute(
             path: AppRoutes.adminNotifications,
-            builder: (_, _) => const AdminActivityScreen(),
+            builder: (_, _) => const AdminActivityRouteBody(),
           ),
           GoRoute(
             path: AppRoutes.adminReports,
-            builder: (_, _) => const ReportsScreen(),
+            builder: (_, _) => const AdminReportsRouteBody(),
+          ),
+          GoRoute(
+            path: AppRoutes.adminProfile,
+            builder: (_, _) => const AdminProfileRouteBody(),
           ),
         ],
       ),
 
-      // ── Student routes ─────────────────────────────────────────────────
+      // ── Student routes (same paths; [StudentShell] + builders pick UI) ─
       ShellRoute(
         builder: (context, state, child) =>
             StudentShell(location: state.matchedLocation, child: child),
         routes: [
           GoRoute(
             path: AppRoutes.studentComplaintNew,
-            builder: (_, _) => const StudentComplaintFormScreen(),
+            builder: (_, _) => const StudentComplaintFormRouteBody(),
           ),
           GoRoute(
             path: AppRoutes.studentComplaints,
-            builder: (_, _) => const StudentComplaintsScreen(),
+            builder: (_, _) => const StudentComplaintsRouteBody(),
           ),
           GoRoute(
             path: AppRoutes.studentHistory,
-            builder: (_, _) => const StudentHistoryScreen(),
+            builder: (_, _) => const StudentHistoryRouteBody(),
           ),
           GoRoute(
             path: AppRoutes.studentProfile,
-            builder: (_, _) => const StudentProfileScreen(),
+            builder: (_, _) => const StudentProfileRouteBody(),
           ),
           GoRoute(
             path: AppRoutes.studentComplaintDetail,
-            builder: (_, state) => StudentComplaintDetailScreen(
+            builder: (_, state) => StudentComplaintDetailRouteBody(
               complaintId: state.pathParameters['id']!,
             ),
           ),
           GoRoute(
             path: AppRoutes.studentNotifications,
-            builder: (_, _) => const StudentActivityScreen(),
+            builder: (_, _) => const StudentActivityRouteBody(),
           ),
         ],
       ),

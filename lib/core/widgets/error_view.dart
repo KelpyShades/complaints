@@ -26,11 +26,19 @@ class ErrorView extends StatelessWidget {
               size: 48,
               color: theme.colorScheme.destructive,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
+            Text(
+              'Could not load',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.large.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: ShadTheme.of(context).textTheme.muted,
+              style: theme.textTheme.muted.copyWith(height: 1.4),
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 16),

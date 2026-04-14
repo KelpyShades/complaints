@@ -13,7 +13,10 @@
         {
             "name": "complaints",
             "request": "launch",
-            "type": "dart"
+            "type": "dart",
+            "args": [
+                "--web-port=8080",
+            ]
         },
         {
             "name": "complaints (profile mode)",

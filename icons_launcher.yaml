@@ -1,0 +1,16 @@
+icons_launcher:
+  image_path: "assets/images/icon.png"
+  platforms:
+    android:
+      enable: true
+      image_path: "assets/images/icon.png"
+      notification_image: "assets/images/icon.png"
+      # adaptive_background_color: '#ffffff'
+      adaptive_background_image: "assets/images/icon.png"
+      adaptive_foreground_image: "assets/images/icon.png"
+      adaptive_round_image: "assets/images/icon.png"
+      adaptive_monochrome_image: "assets/images/icon.png"
+    web:
+      enable: true
+      image_path: "assets/images/icon.png"
+      favicon_path: "assets/images/icon.png"

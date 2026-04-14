@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../complaints/models/complaint_model.dart';
+import '../../../shared/complaints/models/complaint_model.dart';
 import '../../dashboard/providers/admin_dashboard_provider.dart';
 
 /// Admin report provider combining filters and data.

@@ -4,7 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../cache/role_cache.dart';
+import 'package:complaints/features/auth/cache/role_cache.dart';
 import 'app_router.dart';
 
 /// Role-aware auth guard for GoRouter.

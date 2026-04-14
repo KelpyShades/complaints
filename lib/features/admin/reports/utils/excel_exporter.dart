@@ -1,7 +1,7 @@
 import 'package:excel/excel.dart';
 import 'package:complaints/core/utils/file_saver/file_saver.dart';
 
-import '../../../complaints/models/complaint_model.dart';
+import '../../../shared/complaints/models/complaint_model.dart';
 import '../../../../core/error/error_handler.dart';
 
 abstract final class ExcelExporter {

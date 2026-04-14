@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
-import 'core/cache/role_cache.dart';
+import 'package:complaints/features/auth/cache/role_cache.dart';
 import 'core/config/env_config.dart';
 
 Future<void> main() async {
@@ -21,10 +21,5 @@ Future<void> main() async {
   // on the first frame — no wrong-role flicker.
   await RoleCache.preload();
 
-  runApp(
-    const ProviderScope(
-      child: App(),
-    ),
-  );
+  runApp(const ProviderScope(child: App()));
 }
-

@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../core/cache/role_cache.dart';
+import '../cache/role_cache.dart';
 import '../models/user_model.dart';
 import '../repositories/auth_repository.dart';
 

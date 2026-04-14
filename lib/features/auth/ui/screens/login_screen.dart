@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
-import '../../../../core/notifications/notification_service.dart';
+import '../../../../core/push_notifications/notification_service.dart';
+import '../../../../core/utils/user_facing_error_message.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/utils/validators.dart';
 import '../../providers/auth_provider.dart';
@@ -31,7 +32,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final success = await ref.read(signInProvider.notifier).execute(
+    final success = await ref
+        .read(signInProvider.notifier)
+        .execute(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
@@ -44,7 +47,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final error = ref.read(signInProvider).error;
       NotificationService.showError(
         context,
-        error?.toString() ?? 'Sign in failed.',
+        error != null
+            ? userFacingErrorMessage(error)
+            : 'Sign in failed. Please try again.',
       );
     }
   }
@@ -98,6 +103,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     keyboardType: TextInputType.emailAddress,
                     validator: Validators.email,
+                    decoration: ShadDecoration(color: theme.colorScheme.card),
                   ),
                   const SizedBox(height: 16),
 
@@ -110,6 +116,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       padding: EdgeInsets.all(12),
                       child: Icon(LucideIcons.lock, size: 16),
                     ),
+                    decoration: ShadDecoration(color: theme.colorScheme.card),
                     obscureText: true,
                     validator: Validators.password,
                   ),

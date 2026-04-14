@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:complaints/core/utils/user_facing_error_message.dart';
 import 'error_view.dart';
 import 'loading_indicator.dart';
 
@@ -23,11 +24,14 @@ class AsyncValueWidget<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     return value.when(
       data: data,
+      skipLoadingOnReload: true,
       skipLoadingOnRefresh: true,
       skipError: true,
       loading: () => const LoadingIndicator(),
-      error: (error, stackTrace) =>
-          ErrorView(message: error.toString(), onRetry: onRetry),
+      error: (error, stackTrace) => ErrorView(
+        message: userFacingErrorMessage(error),
+        onRetry: onRetry,
+      ),
     );
   }
 }

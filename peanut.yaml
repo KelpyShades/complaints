@@ -1,0 +1,9 @@
+# 1. Install peanut: flutter pub global activate peanut
+
+# 2. Run command: flutter pub global run peanut -b preview
+
+# ALWAYS PUSH TO PREVIEW NOT PROD!
+# 3. Push to GitHub: git push origin --set-upstream preview
+
+# peanut.yaml configuration
+extra-args: "--dart-define-from-file=env.prod.json"

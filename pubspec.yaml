@@ -21,6 +21,7 @@ dependencies:
 
   # UI Framework
   shadcn_ui: ^0.53.3
+  google_fonts: ^8.0.2
 
   # Notifications
   another_flushbar: ^1.12.32
@@ -37,11 +38,24 @@ dependencies:
   # Role caching
   shared_preferences: ^2.3.4
 
-  # Report generation
-  excel: ^4.0.6
+  # Report generation — pub.dev is still 4.0.6 (archive 3 only). Git 5.x matches archive 4 (icons_launcher / image).
+  excel:
+    git:
+      url: https://github.com/justkawal/excel.git
+      ref: 751dfc597c893a0b34eccfe6921f126e03a5c683
   path_provider: ^2.1.5
   share_plus: ^10.1.4
   file_saver: ^0.3.1
+  record: ^6.2.0
+  just_audio: ^0.10.5
+  permission_handler: ^11.4.0
+  cross_file: ^0.3.5
+  uuid: ^4.5.1
+  path: ^1.9.1
+  web: ^1.1.1
+  # 3.1+ reads android/app/build.gradle.kts (3.0.x required obsolete build.gradle only).
+  icons_launcher: ^3.1.0
+  flutter_native_splash: ^2.4.4
 
 dev_dependencies:
   flutter_test:
@@ -56,3 +70,4 @@ flutter:
 
   assets:
     - .env
+    - assets/images/

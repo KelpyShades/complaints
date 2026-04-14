@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
-import '../../../../core/notifications/notification_service.dart';
+import '../../../../core/push_notifications/notification_service.dart';
+import '../../../../core/utils/user_facing_error_message.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/utils/validators.dart';
 import '../../providers/auth_provider.dart';
@@ -36,7 +37,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final success = await ref.read(signUpProvider.notifier).execute(
+    final success = await ref
+        .read(signUpProvider.notifier)
+        .execute(
           email: _emailController.text.trim(),
           password: _passwordController.text,
           fullName: _nameController.text.trim(),
@@ -50,7 +53,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       final error = ref.read(signUpProvider).error;
       NotificationService.showError(
         context,
-        error?.toString() ?? 'Sign up failed.',
+        error != null
+            ? userFacingErrorMessage(error)
+            : 'Sign up failed. Please try again.',
       );
     }
   }
@@ -95,6 +100,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ShadInputFormField(
                     id: 'register-name',
                     controller: _nameController,
+                    decoration: ShadDecoration(color: theme.colorScheme.card),
                     placeholder: const Text('Full Name'),
                     leading: const Padding(
                       padding: EdgeInsets.all(12),
@@ -112,6 +118,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       padding: EdgeInsets.all(12),
                       child: Icon(LucideIcons.mail, size: 16),
                     ),
+                    decoration: ShadDecoration(color: theme.colorScheme.card),
                     keyboardType: TextInputType.emailAddress,
                     validator: Validators.email,
                   ),
@@ -121,6 +128,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     id: 'register-password',
                     controller: _passwordController,
                     placeholder: const Text('Password'),
+                    decoration: ShadDecoration(color: theme.colorScheme.card),
                     leading: const Padding(
                       padding: EdgeInsets.all(12),
                       child: Icon(LucideIcons.lock, size: 16),
@@ -138,6 +146,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       padding: EdgeInsets.all(12),
                       child: Icon(LucideIcons.lock, size: 16),
                     ),
+                    decoration: ShadDecoration(color: theme.colorScheme.card),
                     obscureText: true,
                     validator: (v) =>
                         Validators.confirmPassword(v, _passwordController.text),

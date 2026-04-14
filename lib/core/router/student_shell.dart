@@ -4,13 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'package:complaints/features/auth/providers/auth_provider.dart';
-import 'package:complaints/features/notifications/providers/activity_provider.dart';
+import 'package:complaints/features/shared/activity/providers/activity_provider.dart';
 import 'package:complaints/core/router/app_router.dart';
+import 'package:complaints/core/router/student_adaptive_screens.dart';
 
-/// Desktop sidebar + mobile drawer shell for student users.
-///
-/// Visual language: light slate, warm, friendly — feels like an
-/// accessible academic portal. Compact and focused.
+/// Desktop sidebar + mobile bottom navigation for student users.
 class StudentShell extends ConsumerStatefulWidget {
   const StudentShell({required this.location, required this.child, super.key});
   final String location;
@@ -21,9 +19,34 @@ class StudentShell extends ConsumerStatefulWidget {
 }
 
 class _StudentShellState extends ConsumerState<StudentShell> {
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      syncActivityFeedShellLocation(
+        ref,
+        previousLocation: '',
+        nextLocation: widget.location,
+        activityRoutePrefix: AppRoutes.studentNotifications,
+        isStillMounted: () => mounted,
+      );
+    });
+  }
 
-  int get _selectedIndex {
+  @override
+  void didUpdateWidget(covariant StudentShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    syncActivityFeedShellLocation(
+      ref,
+      previousLocation: oldWidget.location,
+      nextLocation: widget.location,
+      activityRoutePrefix: AppRoutes.studentNotifications,
+      isStillMounted: () => mounted,
+    );
+  }
+
+  int get _desktopSelectedIndex {
     if (widget.location.startsWith(AppRoutes.studentComplaints)) return 0;
     if (widget.location.startsWith(AppRoutes.studentHistory)) return 1;
     if (widget.location.startsWith(AppRoutes.studentNotifications)) return 2;
@@ -31,27 +54,33 @@ class _StudentShellState extends ConsumerState<StudentShell> {
     return 0;
   }
 
+  int _mobileTabIndex(String loc) {
+    if (loc.startsWith(AppRoutes.studentComplaints)) return 0;
+    if (loc.startsWith(AppRoutes.studentHistory)) return 1;
+    if (loc.startsWith(AppRoutes.studentNotifications)) return 2;
+    if (loc.startsWith(AppRoutes.studentProfile)) return 3;
+    return 0;
+  }
+
   void _signOut() => ref.read(signOutProvider.notifier).execute();
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.sizeOf(context).width < 768;
+    final isMobile = studentShellIsMobileLayout(context);
     final unreadCount = ref.watch(unreadActivityCountProvider);
     final user = ref.watch(currentUserProvider).valueOrNull;
 
     if (isMobile) {
       return _StudentMobileLayout(
-        scaffoldKey: _scaffoldKey,
-        selectedIndex: _selectedIndex,
+        location: widget.location,
+        selectedIndex: _mobileTabIndex(widget.location),
         unreadCount: unreadCount,
-        userName: user?.fullName ?? 'Student',
-        onSignOut: _signOut,
         child: widget.child,
       );
     }
 
     return _StudentDesktopLayout(
-      selectedIndex: _selectedIndex,
+      selectedIndex: _desktopSelectedIndex,
       unreadCount: unreadCount,
       userName: user?.fullName ?? 'Student',
       onSignOut: _signOut,
@@ -83,7 +112,6 @@ class _StudentDesktopLayout extends StatelessWidget {
 
     return Row(
       children: [
-        // Sidebar
         Container(
           width: 260,
           decoration: BoxDecoration(
@@ -93,7 +121,6 @@ class _StudentDesktopLayout extends StatelessWidget {
           child: SafeArea(
             child: Column(
               children: [
-                // Header
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 48, 20, 20),
                   child: Row(
@@ -134,7 +161,6 @@ class _StudentDesktopLayout extends StatelessWidget {
                 Divider(color: theme.colorScheme.border, height: 1),
                 const SizedBox(height: 8),
 
-                // Nav items
                 _StudentNavItem(
                   icon: LucideIcons.messageSquare,
                   label: 'My Complaints',
@@ -164,7 +190,6 @@ class _StudentDesktopLayout extends StatelessWidget {
                 const Spacer(),
                 Divider(color: theme.colorScheme.border, height: 1),
 
-                // User chip + logout
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
@@ -261,66 +286,65 @@ class _StudentDesktopLayout extends StatelessWidget {
   }
 }
 
-// ── Mobile: Top Bar + Drawer ───────────────────────────────────────────────
+// ── Mobile: Bottom navigation (no app bar, no drawer) ─────────────────────
 
 class _StudentMobileLayout extends StatelessWidget {
   const _StudentMobileLayout({
-    required this.scaffoldKey,
+    required this.location,
     required this.selectedIndex,
     required this.unreadCount,
-    required this.userName,
-    required this.onSignOut,
     required this.child,
   });
 
-  final GlobalKey<ScaffoldState> scaffoldKey;
+  final String location;
   final int selectedIndex;
   final int unreadCount;
-  final String userName;
-  final VoidCallback onSignOut;
   final Widget child;
+
+  static Widget _navBarIcon({required int index, required int unreadCount}) {
+    final icon = Icon(_destinations[index].icon);
+    if (index != 2 || unreadCount <= 0) return icon;
+    return Badge(
+      label: Text(
+        unreadCount > 99 ? '99+' : '$unreadCount',
+        style: const TextStyle(fontSize: 10),
+      ),
+      child: icon,
+    );
+  }
+
+  static const _destinations = <_MobileNavSpec>[
+    _MobileNavSpec(
+      label: 'Complaints',
+      icon: LucideIcons.messageSquare,
+      path: AppRoutes.studentComplaints,
+    ),
+    _MobileNavSpec(
+      label: 'History',
+      icon: LucideIcons.history,
+      path: AppRoutes.studentHistory,
+    ),
+    _MobileNavSpec(
+      label: 'Activity',
+      icon: LucideIcons.bell,
+      path: AppRoutes.studentNotifications,
+    ),
+    _MobileNavSpec(
+      label: 'Profile',
+      icon: LucideIcons.user,
+      path: AppRoutes.studentProfile,
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
+    final showFab = Uri.parse(location).path == AppRoutes.studentComplaints;
 
     return Scaffold(
-      key: scaffoldKey,
       backgroundColor: theme.colorScheme.background,
-      appBar: AppBar(
-        backgroundColor: theme.colorScheme.card,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(LucideIcons.menu, color: theme.colorScheme.foreground),
-          onPressed: () => scaffoldKey.currentState?.openDrawer(),
-        ),
-        title: Text(
-          'Student Portal',
-          style: theme.textTheme.small.copyWith(
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.foreground,
-          ),
-        ),
-        actions: [
-          _NotificationIconButton(
-            unreadCount: unreadCount,
-            onTap: () => context.go(AppRoutes.studentNotifications),
-          ),
-          const SizedBox(width: 8),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Divider(height: 1, color: theme.colorScheme.border),
-        ),
-      ),
-      drawer: _StudentDrawer(
-        selectedIndex: selectedIndex,
-        userName: userName,
-        unreadCount: unreadCount,
-        onSignOut: onSignOut,
-      ),
-      body: child,
-      floatingActionButton: selectedIndex == 0
+      body: SafeArea(top: true, bottom: false, child: child),
+      floatingActionButton: showFab
           ? FloatingActionButton(
               onPressed: () => context.go(AppRoutes.studentComplaintNew),
               backgroundColor: theme.colorScheme.primary,
@@ -333,173 +357,61 @@ class _StudentMobileLayout extends StatelessWidget {
               ),
             )
           : null,
-    );
-  }
-}
-
-class _StudentDrawer extends StatelessWidget {
-  const _StudentDrawer({
-    required this.selectedIndex,
-    required this.userName,
-    required this.unreadCount,
-    required this.onSignOut,
-  });
-
-  final int selectedIndex;
-  final String userName;
-  final int unreadCount;
-  final VoidCallback onSignOut;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = ShadTheme.of(context);
-
-    return Drawer(
-      backgroundColor: theme.colorScheme.card,
-      child: Column(
-        children: [
-          DrawerHeader(
-            decoration: BoxDecoration(color: theme.colorScheme.card),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    LucideIcons.graduationCap,
-                    color: theme.colorScheme.primaryForeground,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    userName,
-                    style: theme.textTheme.p.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.foreground,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          _StudentNavItem(
-            icon: LucideIcons.messageSquare,
-            label: 'My Complaints',
-            isSelected: selectedIndex == 0,
-            onTap: () {
-              Navigator.of(context).pop();
-              context.go(AppRoutes.studentComplaints);
-            },
-          ),
-          _StudentNavItem(
-            icon: LucideIcons.history,
-            label: 'History',
-            isSelected: selectedIndex == 1,
-            onTap: () {
-              Navigator.of(context).pop();
-              context.go(AppRoutes.studentHistory);
-            },
-          ),
-          _StudentNavItem(
-            icon: LucideIcons.bell,
-            label: 'Activity Feed',
-            isSelected: selectedIndex == 2,
-            badge: unreadCount > 0 ? unreadCount : null,
-            onTap: () {
-              Navigator.of(context).pop();
-              context.go(AppRoutes.studentNotifications);
-            },
-          ),
-          _StudentNavItem(
-            icon: LucideIcons.user,
-            label: 'Profile',
-            isSelected: selectedIndex == 3,
-            onTap: () {
-              Navigator.of(context).pop();
-              context.go(AppRoutes.studentProfile);
-            },
-          ),
-          const Spacer(),
-          Divider(color: theme.colorScheme.border),
-          ListTile(
-            leading: Icon(
-              LucideIcons.logOut,
-              color: theme.colorScheme.destructive,
-              size: 18,
-            ),
-            title: Text(
-              'Sign Out',
-              style: theme.textTheme.small.copyWith(
-                color: theme.colorScheme.destructive,
+      bottomNavigationBar: NavigationBarTheme(
+        data: NavigationBarThemeData(
+          indicatorColor: theme.colorScheme.accent,
+          backgroundColor: theme.colorScheme.card,
+          labelTextStyle: WidgetStateProperty.resolveWith((states) {
+            final selected = states.contains(WidgetState.selected);
+            return theme.textTheme.muted.copyWith(
+              fontSize: 11,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+              color: selected
+                  ? theme.colorScheme.accentForeground
+                  : theme.colorScheme.mutedForeground,
+            );
+          }),
+          iconTheme: WidgetStateProperty.resolveWith((states) {
+            final selected = states.contains(WidgetState.selected);
+            return IconThemeData(
+              size: 22,
+              color: selected
+                  ? theme.colorScheme.accentForeground
+                  : theme.colorScheme.mutedForeground,
+            );
+          }),
+        ),
+        child: NavigationBar(
+          height: 64,
+          selectedIndex: selectedIndex.clamp(0, _destinations.length - 1),
+          onDestinationSelected: (i) {
+            final spec = _destinations[i];
+            context.go(spec.path);
+          },
+          destinations: [
+            for (var i = 0; i < _destinations.length; i++)
+              NavigationDestination(
+                icon: _navBarIcon(index: i, unreadCount: unreadCount),
+                selectedIcon: _navBarIcon(index: i, unreadCount: unreadCount),
+                label: _destinations[i].label,
               ),
-            ),
-            onTap: () {
-              Navigator.of(context).pop();
-              onSignOut();
-            },
-          ),
-          const SizedBox(height: 16),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _NotificationIconButton extends StatelessWidget {
-  const _NotificationIconButton({
-    required this.unreadCount,
-    required this.onTap,
+class _MobileNavSpec {
+  const _MobileNavSpec({
+    required this.label,
+    required this.icon,
+    required this.path,
   });
-  final int unreadCount;
-  final VoidCallback onTap;
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = ShadTheme.of(context);
-    return Stack(
-      children: [
-        IconButton(
-          icon: Icon(
-            LucideIcons.bell,
-            color: theme.colorScheme.foreground,
-            size: 20,
-          ),
-          onPressed: onTap,
-        ),
-        if (unreadCount > 0)
-          Positioned(
-            top: 8,
-            right: 8,
-            child: Container(
-              width: 16,
-              height: 16,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.destructive,
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(
-                  unreadCount > 9 ? '9+' : '$unreadCount',
-                  style: const TextStyle(
-                    fontSize: 9,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
+  final String label;
+  final IconData icon;
+  final String path;
 }
 
 class _StudentNavItem extends StatelessWidget {

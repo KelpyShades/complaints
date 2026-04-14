@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
-import '../../../../core/notifications/notification_service.dart';
+import '../../../../core/push_notifications/notification_service.dart';
+import '../../../../core/utils/user_facing_error_message.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/utils/validators.dart';
 import '../../providers/auth_provider.dart';
@@ -47,7 +48,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       final error = ref.read(resetPasswordProvider).error;
       NotificationService.showError(
         context,
-        error?.toString() ?? 'Failed to send reset email.',
+        error != null
+            ? userFacingErrorMessage(error)
+            : 'Could not send reset email. Please try again.',
       );
     }
   }
@@ -98,6 +101,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                       child: Icon(LucideIcons.mail, size: 16),
                     ),
                     keyboardType: TextInputType.emailAddress,
+                    decoration: ShadDecoration(
+                      color: theme.colorScheme.card,
+                    ),
                     validator: Validators.email,
                   ),
                   const SizedBox(height: 24),
