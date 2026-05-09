@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../data/complaint_media_constants.dart';
 import '../models/pending_complaint_audio.dart';
+import '../models/pending_complaint_image.dart';
 import '../utils/read_pending_audio_bytes.dart';
 import 'complaint_repository_provider.dart';
 
@@ -45,6 +46,7 @@ class ComplaintFormNotifier extends AutoDisposeAsyncNotifier<void> {
     required String category,
     String? existingId,
     PendingComplaintAudio? audio,
+    List<PendingComplaintImage>? images,
   }) async {
     state = const AsyncLoading();
 
@@ -97,6 +99,30 @@ class ComplaintFormNotifier extends AutoDisposeAsyncNotifier<void> {
             complaintId: complaint.id,
             error: e,
           );
+        }
+      }
+
+      if (images != null && images.isNotEmpty) {
+        for (final image in images) {
+          try {
+            final bytes = await image.file.readAsBytes();
+            if (bytes.length > kComplaintImageMaxBytes) {
+              throw Exception(
+                'An image is too large. Maximum size is '
+                '${kComplaintImageMaxBytes ~/ (1024 * 1024)} MB.',
+              );
+            }
+            await repo.uploadComplaintImage(
+              complaintId: complaint.id,
+              userId: user.id,
+              bytes: bytes,
+              mimeType: image.mimeType,
+              fileSize: bytes.length,
+              fileExtension: image.fileExtension,
+            );
+          } catch (e) {
+            // Log or handle partial image upload failure. For now, continue.
+          }
         }
       }
 

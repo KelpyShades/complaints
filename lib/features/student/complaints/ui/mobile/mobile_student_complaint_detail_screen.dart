@@ -13,6 +13,7 @@ import 'package:complaints/features/shared/complaints/models/complaint_attachmen
 import 'package:complaints/features/shared/complaints/models/complaint_model.dart';
 import 'package:complaints/features/shared/complaints/providers/complaint_detail_provider.dart';
 import 'package:complaints/features/shared/complaints/ui/widgets/complaint_audio_attachment_card.dart';
+import 'package:complaints/features/shared/complaints/ui/widgets/complaint_image_gallery.dart';
 import 'package:complaints/features/shared/complaints/ui/widgets/complaint_status_badge.dart';
 
 class MobileStudentComplaintDetailScreen extends ConsumerWidget {
@@ -77,20 +78,32 @@ class MobileStudentComplaintDetailScreen extends ConsumerWidget {
                                 skipLoadingOnRefresh: true,
                                 data: (list) {
                                   ComplaintAttachmentModel? audio;
+                                  final List<ComplaintAttachmentModel> images = [];
                                   for (final a in list) {
                                     if (a.type == ComplaintAttachmentType.audio) {
                                       audio = a;
-                                      break;
+                                    } else if (a.type == ComplaintAttachmentType.image) {
+                                      images.add(a);
                                     }
                                   }
-                                  if (audio == null) {
-                                    return const SizedBox.shrink();
-                                  }
-                                  return Padding(
-                                    padding: const EdgeInsets.only(top: 14),
-                                    child: ComplaintAudioAttachmentCard(
-                                      attachment: audio,
-                                    ),
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      if (images.isNotEmpty)
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 14),
+                                          child: ComplaintImageGallery(
+                                            attachments: images,
+                                          ),
+                                        ),
+                                      if (audio != null)
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 14),
+                                          child: ComplaintAudioAttachmentCard(
+                                            attachment: audio,
+                                          ),
+                                        ),
+                                    ],
                                   );
                                 },
                                 loading: () => const SizedBox.shrink(),
@@ -329,41 +342,6 @@ class _UpdatesSection extends StatelessWidget {
   }
 }
 
-// class _StickyCommentComposer extends StatelessWidget {
-//   const _StickyCommentComposer({required this.complaintId});
-
-//   final String complaintId;
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final theme = ShadTheme.of(context);
-
-//     return DecoratedBox(
-//       decoration: BoxDecoration(
-//         color: theme.colorScheme.background,
-//         border: Border(
-//           top: BorderSide(
-//             color: theme.colorScheme.border.withValues(alpha: 0.9),
-//           ),
-//         ),
-//         boxShadow: [
-//           BoxShadow(
-//             color: theme.colorScheme.foreground.withValues(alpha: 0.03),
-//             blurRadius: 18,
-//             offset: const Offset(0, -6),
-//           ),
-//         ],
-//       ),
-//       child: SafeArea(
-//         top: false,
-//         child: Padding(
-//           padding: const EdgeInsets.fromLTRB(22, 14, 22, 14),
-//           child: CommentInput(complaintId: complaintId),
-//         ),
-//       ),
-//     );
-//   }
-// }
 
 String _heroMetaLine(ComplaintModel complaint) {
   final date = complaint.createdAt;

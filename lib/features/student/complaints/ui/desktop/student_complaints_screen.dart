@@ -1,4 +1,3 @@
-import 'package:complaints/features/student/complaints/providers/student_complaint_list_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,120 +5,134 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'package:complaints/core/router/app_router.dart';
 import 'package:complaints/core/widgets/async_value_widget.dart';
+import 'package:complaints/features/auth/providers/auth_provider.dart';
 import 'package:complaints/features/shared/complaints/models/complaint_model.dart';
 import 'package:complaints/features/shared/complaints/ui/widgets/complaint_card.dart';
+import 'package:complaints/features/shared/complaints/ui/widgets/dashboard_stat_cards.dart';
+import 'package:complaints/features/student/complaints/providers/student_complaint_list_provider.dart';
 
 class StudentComplaintsScreen extends ConsumerWidget {
   const StudentComplaintsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final filteredAsync = ref.watch(studentFilteredComplaintsProvider);
     final theme = ShadTheme.of(context);
+    final currentUser = ref.watch(currentUserProvider).valueOrNull;
+    final statsAsync = ref.watch(studentDashboardStatsProvider);
+    final rawAsync = ref.watch(studentRawComplaintsProvider);
 
-    return Padding(
-      padding: const EdgeInsets.all(24),
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(32),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [Text('My Complaints', style: theme.textTheme.h3)],
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: DashboardWelcomeBlock(
+                  theme: theme,
+                  name: currentUser?.fullName ?? 'Student',
+                ),
+              ),
+              ShadButton(
+                onPressed: () => context.go(AppRoutes.studentComplaintNew),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(LucideIcons.plus, size: 16),
+                    const SizedBox(width: 8),
+                    const Text('New Complaint'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
+          AsyncValueWidget<StudentDashboardStats>(
+            value: statsAsync,
+            onRetry: () => ref.invalidate(studentRawComplaintsProvider),
+            data: (stats) {
+              final open = stats.pending + stats.inProgress;
+              return SizedBox(
+                height: 180,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: DashboardBentoHeroTotalCard(
+                        theme: theme,
+                        total: stats.total,
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      flex: 1,
+                      child: DashboardBentoAccentStatCard(
+                        theme: theme,
+                        label: 'Resolved',
+                        value: stats.resolved,
+                        icon: LucideIcons.circleCheck,
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      flex: 1,
+                      child: DashboardBentoSurfaceStatCard(
+                        theme: theme,
+                        label: 'Open',
+                        caption: 'Pending & in progress',
+                        value: open,
+                        icon: LucideIcons.clock,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 40),
+          Padding(
+            padding: const EdgeInsets.only(left: 2),
+            child: Text(
+              'RECENT',
+              style: theme.textTheme.small.copyWith(
+                fontWeight: FontWeight.w600,
+                fontSize: 11,
+                letterSpacing: 1.05,
+                color: theme.colorScheme.mutedForeground,
+              ),
+            ),
           ),
           const SizedBox(height: 16),
-
-          // Filters
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _FilterChip(label: 'All', value: null),
-                const SizedBox(width: 8),
-                _FilterChip(label: 'Pending', value: ComplaintStatus.pending),
-                const SizedBox(width: 8),
-                _FilterChip(
-                  label: 'In Progress',
-                  value: ComplaintStatus.inProgress,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          Expanded(
-            child: AsyncValueWidget(
-              value: filteredAsync,
-              onRetry: () => ref.invalidate(studentFilteredComplaintsProvider),
-              data: (complaints) {
-                if (complaints.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          LucideIcons.inbox,
-                          size: 48,
-                          color: theme.colorScheme.mutedForeground,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'You have no complaints.',
-                          style: theme.textTheme.muted,
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return ListView.separated(
-                  itemCount: complaints.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final complaint = complaints[index];
-                    return ComplaintCard(
-                      complaint: complaint,
+          AsyncValueWidget<List<ComplaintModel>>(
+            value: rawAsync,
+            onRetry: () => ref.invalidate(studentRawComplaintsProvider),
+            data: (complaints) {
+              final recent = complaints.take(5).toList();
+              if (recent.isEmpty) {
+                return DashboardRecentEmptyState(theme: theme);
+              }
+              return Column(
+                children: [
+                  for (var i = 0; i < recent.length; i++) ...[
+                    if (i > 0) const SizedBox(height: 12),
+                    ComplaintCard(
+                      complaint: recent[i],
                       onTap: () => context.go(
-                        AppRoutes.studentComplaintDetailPath(complaint.id),
+                        AppRoutes.studentComplaintDetailPath(recent[i].id),
                       ),
-                    );
-                  },
-                );
-              },
-            ),
+                    ),
+                  ],
+                ],
+              );
+            },
           ),
         ],
       ),
-    );
-  }
-}
-
-class _FilterChip extends ConsumerWidget {
-  const _FilterChip({required this.label, required this.value});
-
-  final String label;
-  final ComplaintStatus? value;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final current = ref.watch(studentComplaintStatusFilterProvider);
-    final theme = ShadTheme.of(context);
-    final isSelected = current == value;
-
-    return ActionChip(
-      label: Text(label),
-      backgroundColor: isSelected
-          ? theme.colorScheme.primary
-          : theme.colorScheme.muted.withValues(alpha: 0.5),
-      labelStyle: TextStyle(
-        color: isSelected
-            ? theme.colorScheme.primaryForeground
-            : theme.colorScheme.foreground,
-        fontSize: 12,
-      ),
-      side: BorderSide.none,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      onPressed: () =>
-          ref.read(studentComplaintStatusFilterProvider.notifier).state = value,
     );
   }
 }

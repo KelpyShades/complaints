@@ -7,9 +7,11 @@ import 'package:complaints/core/utils/user_facing_error_message.dart';
 import 'package:complaints/core/router/app_router.dart';
 import 'package:complaints/core/utils/validators.dart';
 import 'package:complaints/features/shared/complaints/models/pending_complaint_audio.dart';
+import 'package:complaints/features/shared/complaints/models/pending_complaint_image.dart';
 import 'package:complaints/features/shared/complaints/providers/complaint_form_provider.dart';
 import 'package:complaints/features/shared/complaints/ui/voice_upload_recovery.dart';
 import 'package:complaints/features/shared/complaints/ui/widgets/complaint_audio_recorder_section.dart';
+import 'package:complaints/features/shared/complaints/ui/widgets/complaint_image_picker_section.dart';
 
 class MobileStudentComplaintFormScreen extends ConsumerStatefulWidget {
   const MobileStudentComplaintFormScreen({this.existingComplaintId, super.key});
@@ -28,6 +30,7 @@ class _MobileStudentComplaintFormScreenState
   final _categoryController = TextEditingController();
 
   PendingComplaintAudio? _audioDraft;
+  List<PendingComplaintImage>? _imageDrafts;
 
   @override
   void dispose() {
@@ -46,6 +49,7 @@ class _MobileStudentComplaintFormScreenState
           category: _categoryController.text.trim(),
           existingId: widget.existingComplaintId,
           audio: widget.existingComplaintId == null ? _audioDraft : null,
+          images: widget.existingComplaintId == null ? _imageDrafts : null,
         );
 
     if (!mounted) return;
@@ -147,6 +151,12 @@ class _MobileStudentComplaintFormScreenState
                   decoration: ShadDecoration(color: theme.colorScheme.card),
                 ),
                 if (widget.existingComplaintId == null) ...[
+                  const SizedBox(height: 24),
+                  ComplaintImagePickerSection(
+                    onImagesChanged: (images) {
+                      setState(() => _imageDrafts = images);
+                    },
+                  ),
                   const SizedBox(height: 24),
                   ComplaintAudioRecorderSection(
                     onDraftChanged: (draft) {

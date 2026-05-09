@@ -356,7 +356,7 @@ class _AdminMobileLayout extends StatelessWidget {
               fontSize: 11,
               fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
               color: selected
-                  ? theme.colorScheme.accentForeground
+                  ? theme.colorScheme.foreground
                   : theme.colorScheme.mutedForeground,
             );
           }),

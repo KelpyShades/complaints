@@ -8,6 +8,7 @@ import 'package:complaints/features/shared/complaints/providers/complaint_detail
 import 'package:complaints/features/shared/complaints/ui/widgets/complaint_audio_attachment_card.dart';
 import 'package:complaints/features/shared/complaints/ui/widgets/comment_input.dart';
 import 'package:complaints/features/shared/complaints/ui/widgets/comment_list.dart';
+import 'package:complaints/features/shared/complaints/ui/widgets/complaint_image_gallery.dart';
 import 'package:complaints/features/shared/complaints/ui/widgets/complaint_status_badge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -131,7 +132,7 @@ class AdminComplaintDetailScreen extends ConsumerWidget {
                                   _AdminMobileDescriptionCard(
                                     complaint: complaint,
                                   ),
-                                  _ComplaintAudioAttachmentSection(
+                                  _ComplaintAttachmentsSection(
                                     complaintId: complaintId,
                                   ),
                                   const SizedBox(height: 28),
@@ -221,14 +222,14 @@ class _CaseHero extends StatelessWidget {
         ),
         const SizedBox(height: 22),
         _DescriptionCard(complaint: complaint),
-        _ComplaintAudioAttachmentSection(complaintId: complaint.id),
+        _ComplaintAttachmentsSection(complaintId: complaint.id),
       ],
     );
   }
 }
 
-class _ComplaintAudioAttachmentSection extends ConsumerWidget {
-  const _ComplaintAudioAttachmentSection({required this.complaintId});
+class _ComplaintAttachmentsSection extends ConsumerWidget {
+  const _ComplaintAttachmentsSection({required this.complaintId});
 
   final String complaintId;
 
@@ -241,16 +242,30 @@ class _ComplaintAudioAttachmentSection extends ConsumerWidget {
       skipLoadingOnRefresh: true,
       data: (list) {
         ComplaintAttachmentModel? audio;
+        final List<ComplaintAttachmentModel> images = [];
         for (final a in list) {
           if (a.type == ComplaintAttachmentType.audio) {
             audio = a;
-            break;
+          } else if (a.type == ComplaintAttachmentType.image) {
+            images.add(a);
           }
         }
-        if (audio == null) return const SizedBox.shrink();
-        return Padding(
-          padding: const EdgeInsets.only(top: 16),
-          child: ComplaintAudioAttachmentCard(attachment: audio),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (images.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: ComplaintImageGallery(
+                  attachments: images,
+                ),
+              ),
+            if (audio != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: ComplaintAudioAttachmentCard(attachment: audio),
+              ),
+          ],
         );
       },
       loading: () => const SizedBox.shrink(),

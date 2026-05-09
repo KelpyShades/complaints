@@ -7,6 +7,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:complaints/core/router/app_router.dart';
 import 'package:complaints/core/widgets/async_value_widget.dart';
 import 'package:complaints/features/shared/complaints/models/complaint_model.dart';
+import 'package:complaints/features/shared/complaints/ui/widgets/complaint_card.dart';
 
 class AdminComplaintsScreen extends ConsumerWidget {
   const AdminComplaintsScreen({super.key});
@@ -101,60 +102,13 @@ class AdminComplaintsScreen extends ConsumerWidget {
 
                   return ListView.separated(
                     itemCount: complaints.length,
-                    separatorBuilder: (_, _) =>
-                        Divider(color: theme.colorScheme.border),
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final complaint = complaints[index];
-                      return InkWell(
+                      return ComplaintCard(
+                        complaint: complaint,
                         onTap: () => context.go(
                           AppRoutes.adminComplaintDetailPath(complaint.id),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                flex: 2,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      complaint.title,
-                                      style: theme.textTheme.p.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    Text(
-                                      complaint.id.split('-').first,
-                                      style: theme.textTheme.muted.copyWith(
-                                        fontSize: 10,
-                                        fontFamily: 'monospace',
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Expanded(
-                                flex: 1,
-                                child: Text(
-                                  complaint.category,
-                                  style: theme.textTheme.small,
-                                ),
-                              ),
-                              Expanded(
-                                flex: 1,
-                                child: Text(
-                                  complaint.createdAt != null
-                                      ? '${complaint.createdAt!.day}/${complaint.createdAt!.month}/${complaint.createdAt!.year}'
-                                      : '',
-                                  style: theme.textTheme.small.copyWith(
-                                    color: theme.colorScheme.mutedForeground,
-                                  ),
-                                ),
-                              ),
-                              _AdminStatusBadge(status: complaint.status),
-                            ],
-                          ),
                         ),
                       );
                     },
@@ -164,44 +118,6 @@ class AdminComplaintsScreen extends ConsumerWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _AdminStatusBadge extends StatelessWidget {
-  const _AdminStatusBadge({required this.status});
-  final ComplaintStatus status;
-
-  @override
-  Widget build(BuildContext context) {
-    Color bg;
-    Color fg;
-
-    switch (status) {
-      case ComplaintStatus.pending:
-        bg = Colors.orange.withValues(alpha: 0.2);
-        fg = Colors.orange;
-      case ComplaintStatus.inProgress:
-        bg = Colors.blue.withValues(alpha: 0.2);
-        fg = Colors.blue;
-      case ComplaintStatus.resolved:
-        bg = Colors.green.withValues(alpha: 0.2);
-        fg = Colors.green;
-      case ComplaintStatus.rejected:
-        bg = Colors.red.withValues(alpha: 0.2);
-        fg = Colors.red;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        status.label,
-        style: TextStyle(color: fg, fontSize: 11, fontWeight: FontWeight.bold),
       ),
     );
   }

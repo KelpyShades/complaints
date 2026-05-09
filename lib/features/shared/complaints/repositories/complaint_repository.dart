@@ -204,6 +204,59 @@ class ComplaintRepository {
     }
   }
 
+  /// Uploads image bytes to Storage, then inserts `complaint_attachments`.
+  Future<ComplaintAttachmentModel> uploadComplaintImage({
+    required String complaintId,
+    required String userId,
+    required Uint8List bytes,
+    required String mimeType,
+    required int fileSize,
+    required String fileExtension,
+  }) async {
+    if (fileSize != bytes.length) {
+      throw ArgumentError('fileSize must match byte length.');
+    }
+    if (bytes.isEmpty) {
+      throw ArgumentError('Image payload is empty.');
+    }
+    if (bytes.length > kComplaintImageMaxBytes) {
+      throw Exception(
+        'That image is too large. Maximum size is '
+        '${kComplaintImageMaxBytes ~/ (1024 * 1024)} MB.',
+      );
+    }
+
+    final ext = fileExtension.replaceFirst(RegExp(r'^\.'), '');
+    final objectPath = '$complaintId/${const Uuid().v4()}.$ext';
+
+    try {
+      await _client.storage.from(kComplaintMediaBucketId).uploadBinary(
+        objectPath,
+        bytes,
+        fileOptions: FileOptions(contentType: mimeType),
+      );
+    } catch (e, st) {
+      throw ErrorHandler.handle(e, st);
+    }
+
+    try {
+      final row = await _client.from('complaint_attachments').insert({
+        'complaint_id': complaintId,
+        'user_id': userId,
+        'type': 'image',
+        'storage_path': objectPath,
+        'mime_type': mimeType,
+        'file_size': fileSize,
+      }).select().single();
+      return ComplaintAttachmentModel.fromJson(row);
+    } catch (e, st) {
+      try {
+        await _client.storage.from(kComplaintMediaBucketId).remove([objectPath]);
+      } catch (_) {}
+      throw ErrorHandler.handle(e, st);
+    }
+  }
+
   Future<String> signedUrlForComplaintMedia(
     String storagePath, {
     int expiresInSeconds = 3600,

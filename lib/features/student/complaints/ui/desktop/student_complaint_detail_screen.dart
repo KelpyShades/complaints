@@ -12,7 +12,7 @@ import 'package:complaints/features/shared/complaints/models/complaint_attachmen
 import 'package:complaints/features/shared/complaints/models/complaint_model.dart';
 import 'package:complaints/features/shared/complaints/providers/complaint_detail_provider.dart';
 import 'package:complaints/features/shared/complaints/ui/widgets/complaint_audio_attachment_card.dart';
-import 'package:complaints/features/shared/complaints/ui/widgets/comment_input.dart';
+import 'package:complaints/features/shared/complaints/ui/widgets/complaint_image_gallery.dart';
 
 class StudentComplaintDetailScreen extends ConsumerWidget {
   const StudentComplaintDetailScreen({required this.complaintId, super.key});
@@ -97,16 +97,30 @@ class StudentComplaintDetailScreen extends ConsumerWidget {
                         skipLoadingOnRefresh: true,
                         data: (list) {
                           ComplaintAttachmentModel? audio;
+                          final List<ComplaintAttachmentModel> images = [];
                           for (final a in list) {
                             if (a.type == ComplaintAttachmentType.audio) {
                               audio = a;
-                              break;
+                            } else if (a.type == ComplaintAttachmentType.image) {
+                              images.add(a);
                             }
                           }
-                          if (audio == null) return const SizedBox.shrink();
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 16),
-                            child: ComplaintAudioAttachmentCard(attachment: audio),
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              if (images.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 16),
+                                  child: ComplaintImageGallery(
+                                    attachments: images,
+                                  ),
+                                ),
+                              if (audio != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 16),
+                                  child: ComplaintAudioAttachmentCard(attachment: audio),
+                                ),
+                            ],
                           );
                         },
                         loading: () => const SizedBox.shrink(),
@@ -177,8 +191,6 @@ class StudentComplaintDetailScreen extends ConsumerWidget {
                     value: commentsAsync,
                     data: (comments) => CommentList(comments: comments),
                   ),
-                  const SizedBox(height: 16),
-                  CommentInput(complaintId: complaintId),
                 ],
               ),
             ),
