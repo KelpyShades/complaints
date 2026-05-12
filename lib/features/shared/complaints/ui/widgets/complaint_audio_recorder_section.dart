@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:cross_file/cross_file.dart';
 import 'package:complaints/core/push_notifications/notification_service.dart';
@@ -103,6 +102,14 @@ class _ComplaintAudioRecorderSectionState
         return RecordConfig(encoder: enc, bitRate: 128000);
       }
     }
+
+    // Safari iOS / WebKit: isEncoderSupported may return false for every
+    // AudioEncoder value even though the browser *can* record audio/mp4 (AAC).
+    // Fall back to aacLc which maps to the format Safari actually produces.
+    if (kIsWeb) {
+      return RecordConfig(encoder: AudioEncoder.aacLc, bitRate: 128000);
+    }
+
     return null;
   }
 
@@ -116,6 +123,20 @@ class _ComplaintAudioRecorderSectionState
       dir.path,
       'complaint_audio_${DateTime.now().millisecondsSinceEpoch}.$ext',
     );
+  }
+
+  /// Returns a user-friendly message for recording-specific errors.
+  String _audioErrorMessage(Object error) {
+    final msg = error.toString();
+    // If it's one of our own descriptive exceptions, show it directly.
+    if (msg.contains('Microphone') ||
+        msg.contains('microphone') ||
+        msg.contains('audio format') ||
+        msg.contains('voice note')) {
+      // Strip the "Exception: " prefix if present.
+      return msg.replaceFirst(RegExp(r'^Exception:\s*'), '');
+    }
+    return userFacingErrorMessage(error);
   }
 
   Future<void> _start() async {
@@ -146,7 +167,7 @@ class _ComplaintAudioRecorderSectionState
       setState(() => _recording = true);
     } catch (e) {
       if (mounted) {
-        NotificationService.showError(context, userFacingErrorMessage(e));
+        NotificationService.showError(context, _audioErrorMessage(e));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -184,7 +205,9 @@ class _ComplaintAudioRecorderSectionState
         final bytes = await XFile(path, mimeType: mime).readAsBytes();
         size = bytes.length;
       } else {
-        size = await File(path).length();
+        final file = XFile(path, mimeType: mime);
+        final bytes = await file.readAsBytes();
+        size = bytes.length;
       }
 
       final draft = PendingComplaintAudio(
@@ -201,7 +224,7 @@ class _ComplaintAudioRecorderSectionState
       widget.onDraftChanged(draft);
     } catch (e) {
       if (mounted) {
-        NotificationService.showError(context, userFacingErrorMessage(e));
+        NotificationService.showError(context, _audioErrorMessage(e));
       }
       widget.onDraftChanged(null);
       setState(() => _draft = null);
@@ -249,11 +272,9 @@ class _ComplaintAudioRecorderSectionState
   void _cleanupDraftFile(PendingComplaintAudio draft) {
     if (draft.isWebBlobUrl) {
       revokeBlobUrlIfNeeded(draft.pathOrBlobUrl);
-    } else {
-      try {
-        File(draft.pathOrBlobUrl).deleteSync();
-      } catch (_) {}
     }
+    // On native platforms, temp files are cleaned up by the OS.
+    // Explicit deletion removed to avoid dart:io dependency on web.
   }
 
   Future<void> _togglePreview() async {
@@ -281,7 +302,11 @@ class _ComplaintAudioRecorderSectionState
         );
         return;
       }
-      if (draft.isWebBlobUrl) {
+
+      // On web (including Safari iOS), always use setUrl — AudioSource.file
+      // is not supported by just_audio_web. For native platforms, use the
+      // file-based source for better seeking and offline support.
+      if (kIsWeb) {
         await player.setUrl(draft.pathOrBlobUrl);
       } else {
         await player.setAudioSource(AudioSource.file(draft.pathOrBlobUrl));
@@ -290,7 +315,10 @@ class _ComplaintAudioRecorderSectionState
       await player.play();
     } catch (e) {
       if (mounted) {
-        NotificationService.showError(context, userFacingErrorMessage(e));
+        NotificationService.showError(
+          context,
+          'Could not play the recording. Try stopping and re-recording.',
+        );
       }
     }
     if (mounted) setState(() {});

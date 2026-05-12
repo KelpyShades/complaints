@@ -54,9 +54,32 @@ class _ComplaintAudioAttachmentCardState
       final url = await ref
           .read(complaintRepositoryProvider)
           .signedUrlForComplaintMedia(widget.attachment.storagePath);
+
+      // setUrl + seek + play must happen in quick succession to stay within
+      // Safari iOS's user-gesture context window for audio playback.
       await player.setUrl(url);
       await player.seek(Duration.zero);
       await player.play();
+    } on PlayerException catch (_) {
+      // Safari iOS may reject the first attempt if the server responds with
+      // 200 instead of 206. A second setUrl often succeeds because the
+      // resource is now cached / range-headers are recognized on retry.
+      try {
+        final url = await ref
+            .read(complaintRepositoryProvider)
+            .signedUrlForComplaintMedia(widget.attachment.storagePath);
+        await player.setUrl(url);
+        await player.seek(Duration.zero);
+        await player.play();
+      } catch (_) {
+        if (mounted) {
+          NotificationService.showError(
+            context,
+            'This audio format may not be supported by your browser. '
+            'Try opening on a different device.',
+          );
+        }
+      }
     } catch (e) {
       if (mounted) {
         NotificationService.showError(
