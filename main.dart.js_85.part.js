@@ -7,9 +7,9 @@ x=t.a
 w=u.r
 w.toString
 x.r=w
-u.r=A.bUT(t)
+u.r=A.bUV(t)
 return t},
-bTz(d,e){var x
+bTB(d,e){var x
 A:{if("timePicker.hours"===e){x="Timer"
 break A}if("timePicker.minutes"===e){x="Minutter"
 break A}if("timePicker.seconds"===e){x="Sekunder"
@@ -23,7 +23,7 @@ break A}if("input.selectAll"===e){x="Merk alt"
 break A}if("keyboardToolbar.done"===e){x="Ferdig"
 break A}x=null
 break A}return x},
-bUT(d){return new A.bgo(d)},
+bUV(d){return new A.bgo(d)},
 a9z:function a9z(d,e){var _=this
 _.r=d
 _.z=_.w=$
@@ -40,7 +40,7 @@ gbs(){return this.r}}
 A.anh.prototype={}
 var z=a.updateTypes([])
 A.bgo.prototype={
-$1(d){return A.bTz(this.a,d)},
+$1(d){return A.bTB(this.a,d)},
 $S:2};(function inheritance(){var x=a.mixin,w=a.inherit
 w(A.anh,B.Q)
 w(A.a9z,A.anh)
@@ -48,4 +48,4 @@ w(A.bgo,B.b7)
 x(A.anh,B.bc)})()
 B.br(b.typeUniverse,JSON.parse('{"a9z":{"Q":[]}}'))
 var y={c:B.R("S<a6,Q>")}};
-(a=>{a["ANanEghh7S3J1r7HMeUDnThOsoA="]=a.current})($__dart_deferred_initializers__);
+(a=>{a["iTQftPObaTEZ9F5gQP5sZswGehk="]=a.current})($__dart_deferred_initializers__);
